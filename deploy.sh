@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
 # 一键重新部署：改完 data.js 后执行 ./deploy.sh
+#   ./deploy.sh         → 推到 GitHub Pages（当前线上方式，约 1 分钟生效）
+#   ./deploy.sh surge   → 推到 Surge（备用，需要已配置 SURGE_TOKEN）
 set -euo pipefail
 cd "$(dirname "$0")"
 
-NODE_BIN="${NODE_BIN:-node}"
-if command -v node >/dev/null 2>&1; then NODE_BIN=node; fi
-
 # 1) 语法检查：data.js 写错会直接在这里报出来
-"$NODE_BIN" --check data.js
+node --check data.js
 echo "✓ data.js 语法 OK"
 
-# 2) 部署（域名固定，覆盖更新）
-if [ -z "${SURGE_TOKEN:-}" ]; then
-  echo "✗ 缺少 SURGE_TOKEN。先执行："
-  echo "  export SURGE_LOGIN='你的 surge 邮箱'"
-  echo "  export SURGE_TOKEN='你的 surge token'"
-  exit 1
+if [ "${1:-}" = "surge" ]; then
+  if [ -z "${SURGE_TOKEN:-}" ]; then
+    echo "✗ 缺少 SURGE_TOKEN：export SURGE_LOGIN=... SURGE_TOKEN=..."
+    exit 1
+  fi
+  npx --yes surge ./ 100-memory-stars.surge.sh
+  echo "✓ 已部署到 https://100-memory-stars.surge.sh"
+  exit 0
 fi
 
-npx --yes surge ./ 100-memory-stars.surge.sh
-echo "✓ 已部署：https://100-memory-stars.surge.sh"
+# 2) 默认：提交并推送到 GitHub Pages
+git add -A
+git commit -m "update: $(date '+%Y-%m-%d %H:%M')" || echo "（没有内容变化）"
+git push origin main
+echo "✓ 已推送，GitHub Pages 约 1 分钟内生效：https://yokim99.github.io/memory-stars/"

@@ -81,22 +81,25 @@ cooldownMinutes: 5   // 测试期 5 分钟；上线可以改成 60、720（12 �
 
 ## 六、部署（链接固定不变）
 
-站点已经部署在 **https://100-memory-stars.surge.sh**（Surge）。以后改完素材，在 `memories/` 目录执行：
+**线上地址：https://yokim99.github.io/memory-stars/**
+
+托管在 GitHub Pages（仓库 `yokim99/memory-stars`，`main` 分支每次推送自动发布）。改完素材后：
 
 ```bash
+cd memories
 ./deploy.sh
 ```
 
-`deploy.sh` 会做两件事：检查 `data.js` 是否有语法错误 → 用同一个域名重新上传。**域名不变，覆盖更新**。
+脚本会先检查 `data.js` 语法，然后自动 `git commit + push`。**大约 1 分钟后刷新页面即可看到新内容，链接不变。**
 
-首次使用前，把 Surge 的 token 写进环境变量（不要写进代码）：
+备用方案：Surge（域名 `100-memory-stars.surge.sh` 已发布，但账号需要点一下邮件里的验证链接才能访问）：
 
 ```bash
-export SURGE_LOGIN='你的 surge 邮箱'
-export SURGE_TOKEN='你的 surge token'
+export SURGE_LOGIN='...' SURGE_TOKEN='...'
+./deploy.sh surge
 ```
 
-> 如果换到别的托管（GitHub Pages / Cloudflare Pages / 自己的服务器），只需要把 `index.html` + `data.js` 两个文件传上去，域名固定即可；`deploy.sh` 里替换成对应命令。
+> 想换域名/换托管：把 `index.html` 和 `data.js` 两个文件放到任意静态托管即可，页面不依赖后端。
 
 ### 本地预览
 
@@ -113,6 +116,7 @@ python3 -m http.server 8080
 - 回应与进度**只存在访问者自己的浏览器**，不上传、不收集、没有后端；
 - 同一台设备清理浏览器数据会丢失进度；
 - 任何人拿到链接都能看内容、写自己的回应（各自的浏览器各存各的）；
+- 仓库是公开的（GitHub Pages 免费版要求），素材原文也会随仓库公开；
 - 素材会随页面公开，请只放你们愿意被看到的内容。
 
 ---
