@@ -534,7 +534,7 @@
     </div>
 
     <div class="card__success" id="cardSuccess" hidden>
-      <p id="successText">你已经和星星一块升成新的回忆碎片啦</p>
+      <p id="successText">你已经和星星一块生成新的回忆碎片啦</p>
       <small id="successTime"></small>
     </div>
 
@@ -939,7 +939,7 @@
 
     // 成功态
     cardForm.hidden = true;
-    $('successText').textContent = CONFIG.successText || '你已经和星星一块升成新的回忆碎片啦';
+    $('successText').textContent = CONFIG.successText || '你已经和星星一块生成新的回忆碎片啦';
     $('successTime').textContent = '回应时间 ' + fmtTime(now);
     cardSuccess.hidden = false;
     chime();

@@ -18,7 +18,7 @@ window.CONFIG = {
   siteTitle: '100 颗回忆星',
   guideText: '点点这些灰色小星星，会有惊喜哦',
   bottleLabel: '许愿瓶',
-  successText: '你已经和星星一块升成新的回忆碎片啦',
+  successText: '你已经和星星一块生成新的回忆碎片啦',
   responsePlaceholder: '想对这颗星说点什么…',
   submitText: '把它放进许愿瓶'
 };
