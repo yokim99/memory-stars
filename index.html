@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#120826">
+<title>100 颗回忆星</title>
+<style>
+  :root {
+    --bg-0: #0b0518;
+    --bg-1: #1a0b33;
+    --bg-2: #2a1046;
+    --pink: #ffb7d5;
+    --pink-2: #ff8fbe;
+    --gold: #ffe0a3;
+    --ink: #f6ecff;
+    --ink-2: #cbb8e6;
+    --ink-3: #8d7aa8;
+    --glass: rgba(255, 255, 255, .07);
+    --line: rgba(255, 255, 255, .12);
+    --shadow: 0 24px 70px rgba(0, 0, 0, .45);
+    --radius: 20px;
+    --serif: "Songti SC", "Noto Serif SC", "STSong", "SimSun", serif;
+    --sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--bg-0);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button { font-family: inherit; cursor: pointer; color: inherit; }
+  button:focus-visible, textarea:focus-visible { outline: 2px solid var(--pink); outline-offset: 3px; }
+
+  /* ---------------- 深空背景 ---------------- */
+  .space {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(120% 90% at 78% 12%, rgba(120, 56, 160, .55), transparent 60%),
+      radial-gradient(90% 70% at 20% 85%, rgba(190, 72, 130, .28), transparent 62%),
+      radial-gradient(60% 50% at 50% 40%, rgba(70, 40, 120, .5), transparent 70%),
+      linear-gradient(160deg, var(--bg-1) 0%, var(--bg-0) 55%, #0a0414 100%);
+    z-index: 0;
+  }
+
+  .space::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(70% 60% at 50% 50%, transparent 40%, rgba(0, 0, 0, .55) 100%);
+    pointer-events: none;
+  }
+
+  .dust { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+  .dust i {
+    position: absolute; display: block; border-radius: 50%;
+    background: #fff; opacity: .16;
+  }
+
+  /* ---------------- 星空区 ---------------- */
+  .sky {
+    position: fixed; inset: 0 0 0 132px; z-index: 2;   /* 左侧给许愿瓶留位置 */
+  }
+
+  @media (max-width: 720px) {
+    .sky { inset: 0 0 96px 0; }
+  }
+
+  .star {
+    position: absolute;
+    width: 34px; height: 34px;
+    margin: -17px 0 0 -17px;          /* 以坐标为中心 */
+    border: 0; background: none; padding: 0;
+    display: grid; place-items: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .25s ease, opacity .35s ease, filter .35s ease;
+  }
+
+  .star svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+  /* 未点亮：灰色四角星 */
+  .star--dim svg { fill: #8b8399; opacity: .62; transition: fill .3s ease, opacity .3s ease; }
+  .star--dim:hover svg, .star--dim:focus-visible svg { fill: #b9b3c6; opacity: .9; }
+  .star--dim:hover { transform: scale(1.18); }
+
+  /* 已点亮：暖粉 / 淡金发光 */
+  .star--lit svg {
+    fill: var(--pink);
+    filter: drop-shadow(0 0 6px rgba(255, 183, 213, .85)) drop-shadow(0 0 18px rgba(255, 143, 190, .45));
+  }
+  .star--lit.is-gold svg {
+    fill: var(--gold);
+    filter: drop-shadow(0 0 6px rgba(255, 224, 163, .9)) drop-shadow(0 0 18px rgba(255, 200, 120, .45));
+  }
+  .star--lit:hover { transform: scale(1.12); }
+
+  /* 冷却锁定 */
+  .star--locked svg { fill: #37303f; opacity: .38; }
+  .star--locked { cursor: not-allowed; }
+
+  /* 缺号空位：几乎看不见 */
+  .star--empty {
+    position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, .10), rgba(255, 255, 255, 0) 70%);
+    opacity: .5; pointer-events: none;
+  }
+
+  /* 轻微呼吸 / 随机闪烁，吸引点击 */
+  .star.is-twinkle svg { animation: twinkle 1.5s ease-in-out; }
+  @keyframes twinkle {
+    0%, 100% { opacity: .5; transform: scale(1); }
+    35% { opacity: 1; transform: scale(1.22); }
+    70% { opacity: .7; transform: scale(1.05); }
+  }
+
+  /* 星星上的编号（悬停才出现，避免干扰） */
+  .star__no {
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    font-size: 10.5px; letter-spacing: .5px; color: var(--ink-3);
+    opacity: 0; transition: opacity .2s ease; pointer-events: none; white-space: nowrap;
+  }
+  .star:hover .star__no, .star:focus-visible .star__no { opacity: 1; }
+
+  /* 点击绽放 */
+  .bloom {
+    position: fixed; width: 12px; height: 12px; margin: -6px 0 0 -6px;
+    border-radius: 50%; pointer-events: none; z-index: 40;
+    background: radial-gradient(circle, rgba(255, 220, 240, .95), rgba(255, 160, 205, .5) 40%, transparent 70%);
+    animation: bloom .85s cubic-bezier(.2, .7, .3, 1) forwards;
+  }
+  @keyframes bloom {
+    0% { transform: scale(.4); opacity: .95; }
+    60% { opacity: .55; }
+    100% { transform: scale(11); opacity: 0; }
+  }
+
+  /* 飞向许愿瓶的星 */
+  .fly {
+    position: fixed; left: 0; top: 0; width: 26px; height: 26px;
+    pointer-events: none; z-index: 80; will-change: transform, opacity;
+  }
+  .fly svg { width: 100%; height: 100%; fill: var(--pink); filter: drop-shadow(0 0 10px rgba(255, 183, 213, .9)); }
+
+  /* ---------------- 许愿瓶 ---------------- */
+  .bottle {
+    position: fixed; left: 22px; bottom: 26px; z-index: 30;
+    width: 104px;
+    border: 0; background: none; padding: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: transform .3s ease;
+  }
+  .bottle:hover { transform: translateY(-3px); }
+
+  .bottle__count {
+    font-size: 11.5px; color: var(--ink-2); letter-spacing: .4px;
+    background: var(--glass); border: 1px solid var(--line);
+    padding: 4px 10px; border-radius: 20px; backdrop-filter: blur(8px);
+    white-space: nowrap;
+  }
+  .bottle__count b { font-size: 14px; color: var(--pink); margin-right: 2px; }
+
+  .bottle__glass {
+    position: relative; width: 92px; height: 126px;
+    filter: drop-shadow(0 10px 24px rgba(255, 120, 180, .22));
+  }
+  .bottle__glass svg { width: 100%; height: 100%; display: block; }
+
+  .bottle__stars {
+    position: absolute; left: 16px; right: 16px; top: 44px; bottom: 14px;
+    overflow: hidden; border-radius: 16px 16px 22px 22px;
+  }
+  .bottle__stars i {
+    position: absolute; width: 8px; height: 8px;
+    background: var(--pink); border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255, 183, 213, .9);
+    animation: float 4.5s ease-in-out infinite;
+  }
+  .bottle__stars i:nth-child(3n) { background: var(--gold); box-shadow: 0 0 8px rgba(255, 224, 163, .9); }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  .bottle__label { font-size: 11px; color: var(--ink-3); letter-spacing: 2px; }
+
+  /* 冷却提示 */
+  .cool {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%);
+    z-index: 31;
+    font-size: 12px; color: var(--ink-2);
+    background: rgba(20, 10, 36, .72); border: 1px solid var(--line);
+    padding: 7px 14px; border-radius: 20px; backdrop-filter: blur(10px);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .cool b { color: var(--pink); font-variant-numeric: tabular-nums; letter-spacing: .5px; }
+  .cool__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pink); opacity: .8; }
+
+  /* ---------------- 首次引导 ---------------- */
+  .guide {
+    position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%);
+    z-index: 25; text-align: center; pointer-events: none;
+    transition: opacity .8s ease;
+  }
+  .guide p {
+    font-family: var(--serif);
+    font-size: clamp(17px, 2.4vw, 22px);
+    letter-spacing: 2px; color: var(--ink);
+    text-shadow: 0 0 20px rgba(255, 183, 213, .55);
+  }
+  .guide small { display: block; margin-top: 10px; font-size: 11.5px; color: var(--ink-3); letter-spacing: 1px; }
+  .guide.is-out { opacity: 0; }
+
+  /* ---------------- 卡片弹层 ---------------- */
+  .modal {
+    position: fixed; inset: 0; z-index: 90;
+    display: grid; place-items: center;
+    padding: 20px;
+  }
+  .modal[hidden] { display: none; }
+
+  .modal__backdrop {
+    position: absolute; inset: 0;
+    background: rgba(8, 3, 16, .55);
+    backdrop-filter: blur(6px);
+    animation: fade .3s ease both;
+  }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .card {
+    position: relative;
+    width: min(520px, 100%);
+    max-height: min(84vh, 720px);
+    overflow: auto;
+    background: linear-gradient(165deg, rgba(48, 24, 74, .96), rgba(26, 12, 44, .97));
+    border: 1px solid rgba(255, 183, 213, .26);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, .08);
+    padding: 30px 28px 26px;
+    animation: card-in .42s cubic-bezier(.2, .8, .3, 1) both;
+  }
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .card__close {
+    position: absolute; top: 12px; right: 12px;
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid var(--line); background: rgba(255, 255, 255, .06);
+    color: var(--ink-2); font-size: 16px; line-height: 1;
+  }
+  .card__close:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+
+  .card__top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .card__spark { width: 22px; height: 22px; flex: none; }
+  .card__spark svg { width: 100%; height: 100%; fill: var(--pink); filter: drop-shadow(0 0 8px rgba(255, 183, 213, .8)); }
+  .card__no { font-size: 12px; letter-spacing: 1.5px; color: var(--ink-3); }
+
+  .card__text {
+    font-family: var(--serif);
+    font-size: clamp(17px, 2.1vw, 20px);
+    line-height: 1.95;
+    letter-spacing: 1px;
+    color: #fff7fb;
+    min-height: 3.9em;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .card__text .caret {
+    display: inline-block; width: 1px; height: 1.05em; margin-left: 2px;
+    background: var(--pink); vertical-align: -2px;
+    animation: caret .9s steps(2) infinite;
+  }
+  @keyframes caret { 50% { opacity: 0; } }
+
+  .card__meta { margin-top: 14px; font-size: 11.5px; color: var(--ink-3); letter-spacing: .5px; }
+
+  .card__form { margin-top: 22px; padding-top: 20px; border-top: 1px dashed var(--line); }
+  .card__label { font-size: 12.5px; color: var(--ink-2); letter-spacing: .5px; margin-bottom: 10px; display: block; }
+
+  .card textarea {
+    width: 100%; min-height: 82px; resize: vertical;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--ink); font: inherit; font-size: 14px; line-height: 1.7;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .card textarea::placeholder { color: #8a7aa3; }
+  .card textarea:focus { border-color: rgba(255, 183, 213, .55); background: rgba(255, 255, 255, .08); outline: none; }
+
+  .card__foot { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .card__count { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .card__foot .grow { flex: 1; }
+
+  .btn {
+    height: 40px; padding: 0 20px;
+    border: 1px solid rgba(255, 183, 213, .5); border-radius: 20px;
+    background: linear-gradient(135deg, #ff9fc7, #ff7fb3);
+    color: #3a0f26; font-size: 13px; font-weight: 600; letter-spacing: .5px;
+    transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+    box-shadow: 0 8px 20px rgba(255, 127, 179, .28);
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(255, 127, 179, .38); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: .45; box-shadow: none; cursor: not-allowed; transform: none; }
+
+  /* 成功态 */
+  .card__success {
+    margin-top: 22px; padding: 18px 16px;
+    border: 1px solid rgba(255, 183, 213, .28);
+    background: radial-gradient(120% 120% at 50% 0%, rgba(255, 183, 213, .16), transparent 70%);
+    border-radius: 14px; text-align: center;
+    animation: card-in .5s ease both;
+  }
+  .card__success p {
+    font-family: var(--serif); font-size: 16px; letter-spacing: 1.2px; color: #fff3f9;
+  }
+  .card__success small { display: block; margin-top: 8px; font-size: 11.5px; color: var(--ink-3); }
+
+  .card__read .card__form { border-top: 0; padding-top: 0; }
+  .read-block {
+    margin-top: 18px; padding: 14px 16px; border-radius: 12px;
+    background: rgba(255, 255, 255, .05); border: 1px solid var(--line);
+  }
+  .read-block__label { font-size: 11px; color: var(--ink-3); letter-spacing: 1px; }
+  .read-block__text { margin-top: 6px; font-size: 14.5px; line-height: 1.75; color: #fdf3fa; white-space: pre-wrap; word-break: break-word; }
+  .read-block__time { margin-top: 8px; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+  /* ---------------- 银河 ---------------- */
+  .galaxy {
+    position: fixed; inset: 0; z-index: 95;
+    background:
+      radial-gradient(80% 60% at 50% 40%, rgba(90, 46, 140, .55), transparent 70%),
+      radial-gradient(60% 40% at 20% 90%, rgba(190, 72, 130, .25), transparent 70%),
+      linear-gradient(160deg, #0a0416, #120826 60%, #0a0414);
+    animation: fade .35s ease both;
+  }
+  .galaxy[hidden] { display: none; }
+
+  .galaxy__head {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 22px 26px;
+  }
+  .galaxy__title { font-family: var(--serif); font-size: 18px; letter-spacing: 3px; }
+  .galaxy__sub { font-size: 11.5px; color: var(--ink-3); letter-spacing: 1px; }
+  .galaxy__close {
+    margin-left: auto; width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--line); background: rgba(255, 255, 255, .06);
+    color: var(--ink-2); font-size: 17px; line-height: 1;
+  }
+  .galaxy__close:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+
+  .galaxy__stage { position: absolute; inset: 70px 0 0; }
+  .galaxy__lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .galaxy__lines polyline { fill: none; stroke: rgba(255, 183, 213, .22); stroke-width: 1; stroke-dasharray: 3 6; }
+
+  .gstar {
+    position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px;
+    border: 0; background: none; padding: 0; display: grid; place-items: center;
+    transition: transform .2s ease;
+  }
+  .gstar svg { width: 100%; height: 100%; fill: var(--pink); filter: drop-shadow(0 0 6px rgba(255, 183, 213, .8)); }
+  .gstar:hover { transform: scale(1.25); }
+  .gstar__no {
+    position: absolute; top: 104%; left: 50%; transform: translateX(-50%);
+    font-size: 9.5px; color: var(--ink-3); white-space: nowrap; opacity: 0; transition: opacity .2s ease;
+  }
+  .gstar:hover .gstar__no { opacity: 1; }
+
+  .gcard {
+    position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+    width: min(520px, calc(100% - 32px)); z-index: 4;
+    background: linear-gradient(165deg, rgba(48, 24, 74, .97), rgba(24, 11, 40, .98));
+    border: 1px solid rgba(255, 183, 213, .25);
+    border-radius: 16px; padding: 18px 20px;
+    box-shadow: var(--shadow);
+    animation: card-in .3s ease both;
+  }
+  .gcard[hidden] { display: none; }
+  .gcard__head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .gcard__no { font-size: 11px; color: var(--ink-3); letter-spacing: 1px; }
+  .gcard__close { margin-left: auto; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .07); color: var(--ink-2); }
+  .gcard__text { font-family: var(--serif); font-size: 15px; line-height: 1.8; color: #fff7fb; white-space: pre-wrap; }
+  .gcard__resp { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); }
+  .gcard__resp b { font-size: 10.5px; font-weight: 400; color: var(--ink-3); letter-spacing: 1px; display: block; }
+  .gcard__resp span { display: block; margin-top: 4px; font-size: 13.5px; color: #fdeff7; }
+  .gcard__time { margin-top: 8px; font-size: 10.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+  /* ---------------- 提示条 ---------------- */
+  .toast {
+    position: fixed; left: 50%; top: 22px; transform: translate(-50%, -12px);
+    z-index: 120; padding: 9px 16px; border-radius: 20px;
+    background: rgba(28, 14, 46, .92); border: 1px solid var(--line);
+    color: var(--ink-2); font-size: 12.5px; letter-spacing: .5px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+    backdrop-filter: blur(8px);
+  }
+  .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+  /* 声音开关 */
+  .sound {
+    position: fixed; top: 18px; right: 18px; z-index: 40;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--line); background: rgba(255, 255, 255, .05);
+    color: var(--ink-2); font-size: 14px;
+  }
+  .sound:hover { background: rgba(255, 255, 255, .1); }
+
+  /* ---------------- 管理面板 ---------------- */
+  .admin {
+    position: fixed; right: 18px; bottom: 18px; z-index: 130;
+    width: 280px; padding: 16px;
+    background: rgba(20, 10, 34, .96); border: 1px solid var(--line);
+    border-radius: 14px; box-shadow: var(--shadow);
+    font-size: 12.5px; color: var(--ink-2);
+  }
+  .admin[hidden] { display: none; }
+  .admin h3 { font-size: 13px; color: var(--ink); margin-bottom: 10px; letter-spacing: .5px; }
+  .admin p { line-height: 1.7; margin-bottom: 10px; }
+  .admin .row { display: flex; gap: 8px; }
+  .admin button {
+    flex: 1; height: 32px; border-radius: 8px;
+    border: 1px solid var(--line); background: rgba(255, 255, 255, .06);
+    color: var(--ink-2); font-size: 12px;
+  }
+  .admin button:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+  .admin button.danger { border-color: rgba(255, 120, 140, .5); color: #ffb3c1; }
+
+  @media (max-width: 720px) {
+    .bottle { left: 12px; bottom: 14px; width: 76px; }
+    .bottle__glass { width: 66px; height: 92px; }
+    .bottle__count { font-size: 10px; padding: 3px 7px; }
+    .bottle__count b { font-size: 12px; }
+    .bottle__label { font-size: 10px; letter-spacing: 1px; }
+    .bottle__stars { left: 11px; right: 11px; top: 32px; bottom: 10px; }
+    .cool { bottom: 14px; font-size: 11px; padding: 6px 11px; }
+    .card { padding: 26px 20px 22px; }
+    .star { width: 30px; height: 30px; margin: -15px 0 0 -15px; }
+    .gcard { bottom: 16px; padding: 14px 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .star, .star svg, .bottle, .btn { transition: none !important; }
+    .star.is-twinkle svg { animation: none; }
+    .bloom { display: none; }
+    .card, .galaxy, .modal__backdrop, .card__success { animation: none; }
+    .bottle__stars i { animation: none; }
+    .card__text .caret { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="space" aria-hidden="true"></div>
+<div class="dust" id="dust" aria-hidden="true"></div>
+
+<main class="sky" id="sky" aria-label="回忆星空，共 100 颗星"></main>
+
+<button class="bottle" id="bottle" type="button" aria-label="打开许愿瓶，查看银河">
+  <div class="bottle__count"><b id="count">0</b> / 100 颗</div>
+  <div class="bottle__glass">
+    <svg viewBox="0 0 92 126" aria-hidden="true">
+      <defs>
+        <linearGradient id="gGlass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(255,205,230,.5)"/>
+          <stop offset="55%" stop-color="rgba(255,165,210,.3)"/>
+          <stop offset="100%" stop-color="rgba(255,145,200,.42)"/>
+        </linearGradient>
+        <linearGradient id="gCork" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f3c9a8"/>
+          <stop offset="100%" stop-color="#d79b78"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="46" cy="118" rx="32" ry="6" fill="rgba(255,150,200,.28)"/>
+      <path d="M34 14h24v10c0 4 2 6 5 9 7 7 11 16 11 27v37c0 9-7 15-16 15H34c-9 0-16-6-16-15V60c0-11 4-20 11-27 3-3 5-5 5-9V14z"
+            fill="url(#gGlass)" stroke="rgba(255,190,220,.8)" stroke-width="1.3"
+            style="filter: drop-shadow(0 0 14px rgba(255,150,200,.35))"/>
+      <rect x="33" y="6" width="26" height="12" rx="4" fill="url(#gCork)" stroke="rgba(255,235,220,.4)"/>
+      <path d="M26 40c3-6 7-9 11-12" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M70 52c3 8 4 20 3 34" stroke="rgba(255,255,255,.18)" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </svg>
+    <div class="bottle__stars" id="bottleStars" aria-hidden="true"></div>
+  </div>
+  <div class="bottle__label" id="bottleLabel">许愿瓶</div>
+</button>
+
+<div class="cool" id="cool" hidden>
+  <span class="cool__dot"></span>
+  <span>下一颗星 <b id="coolTime">05:00</b> 后可点亮</span>
+</div>
+
+<div class="guide" id="guide">
+  <p id="guideText">点点这些灰色小星星，会有惊喜哦</p>
+  <small>每颗星里，藏着一句话</small>
+</div>
+
+<button class="sound" id="sound" type="button" aria-label="声音开关">♪</button>
+
+<!-- 卡片 -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__backdrop" id="modalBackdrop"></div>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="cardNo">
+    <button class="card__close" id="cardClose" type="button" aria-label="关闭">×</button>
+
+    <div class="card__top">
+      <div class="card__spark" aria-hidden="true">
+        <svg viewBox="0 0 100 100"><path d="M50 0C55 30 70 45 100 50 70 55 55 70 50 100 45 70 30 55 0 50 30 45 45 30 50 0Z"/></svg>
+      </div>
+      <div class="card__no" id="cardNo">第 1 颗星</div>
+    </div>
+
+    <div class="card__text" id="cardText"></div>
+
+    <div class="card__form" id="cardForm">
+      <label class="card__label" for="response">写一句回应给它</label>
+      <textarea id="response" maxlength="120" placeholder="想对这颗星说点什么…"></textarea>
+      <div class="card__foot">
+        <span class="card__count" id="respCount">0 / 120</span>
+        <span class="grow"></span>
+        <button class="btn" id="submit" type="button">把它放进许愿瓶</button>
+      </div>
+    </div>
+
+    <div class="card__success" id="cardSuccess" hidden>
+      <p id="successText">你已经和星星一块升成新的回忆碎片啦</p>
+      <small id="successTime"></small>
+    </div>
+
+    <div class="card__read" id="cardRead" hidden>
+      <div class="read-block">
+        <div class="read-block__label">我的回应</div>
+        <div class="read-block__text" id="readResponse"></div>
+        <div class="read-block__time" id="readTime"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 银河 -->
+<section class="galaxy" id="galaxy" hidden aria-label="银河回顾">
+  <div class="galaxy__head">
+    <div class="galaxy__title">我们的银河</div>
+    <div class="galaxy__sub" id="galaxySub">已点亮 0 颗</div>
+    <button class="galaxy__close" id="galaxyClose" type="button" aria-label="关闭银河">×</button>
+  </div>
+  <div class="galaxy__stage" id="galaxyStage">
+    <svg class="galaxy__lines" id="galaxyLines" aria-hidden="true"></svg>
+    <div id="galaxyStars"></div>
+  </div>
+  <div class="gcard" id="gcard" hidden>
+    <div class="gcard__head">
+      <span class="gcard__no" id="gcardNo"></span>
+      <button class="gcard__close" id="gcardClose" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="gcard__text" id="gcardText"></div>
+    <div class="gcard__resp">
+      <b>我的回应</b>
+      <span id="gcardResp"></span>
+    </div>
+    <div class="gcard__time" id="gcardTime"></div>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="admin" id="admin" hidden>
+  <h3>管理面板</h3>
+  <p>已点亮 <b id="adminLit">0</b> / 100 颗<br>素材编号：<span id="adminIds">—</span></p>
+  <div class="row">
+    <button id="adminReset" class="danger" type="button">重置进度</button>
+    <button id="adminExport" type="button">导出进度</button>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ================= 基础 ================= */
+  var CONFIG = window.CONFIG || {};
+  var MEMORIES = window.MEMORIES || {};
+  var TOTAL = CONFIG.total || 100;
+  var COOLDOWN_MS = (CONFIG.cooldownMinutes || 5) * 60 * 1000;
+  var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var KEY_PROGRESS = 'mstar.progress.v1';
+  var KEY_GUIDE = 'mstar.guide.v1';
+  var KEY_SOUND = 'mstar.sound.v1';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var sky = $('sky');
+
+  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function fmtTime(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
+      ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function fmtLeft(ms) {
+    ms = Math.max(0, ms);
+    var s = Math.ceil(ms / 1000);
+    return pad2(Math.floor(s / 60)) + ':' + pad2(s % 60);
+  }
+
+  function hash(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+
+  var CONTENT_HASH = hash(JSON.stringify(MEMORIES) + '|' + TOTAL);
+
+  /* ================= 状态 ================= */
+  function loadProgress() {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY_PROGRESS); } catch (e) {}
+    var data = null;
+    if (raw) { try { data = JSON.parse(raw); } catch (e) {} }
+
+    // 换素材 → 旧进度自动清空
+    if (!data || data.hash !== CONTENT_HASH) {
+      data = { hash: CONTENT_HASH, lit: {}, cooldownUntil: 0 };
+      saveProgress(data);
+    }
+    if (!data.lit) data.lit = {};
+    if (!data.cooldownUntil) data.cooldownUntil = 0;
+    return data;
+  }
+
+  function saveProgress(data) {
+    try { localStorage.setItem(KEY_PROGRESS, JSON.stringify(data)); } catch (e) {}
+  }
+
+  var progress = loadProgress();
+
+  var soundOn = (function () {
+    try { return localStorage.getItem(KEY_SOUND) !== '0'; } catch (e) { return true; }
+  })();
+
+  /* ================= 星空布局 ================= */
+  // 黄金角螺旋 + 轻微抖动，稳定、不重叠、有星团感
+  function layout(n) {
+    var pts = [];
+    var golden = Math.PI * (3 - Math.sqrt(5));
+    for (var i = 0; i < n; i++) {
+      var t = (i + 0.5) / n;
+      var r = Math.sqrt(t) * 0.455;
+      var a = i * golden;
+      var jx = (Math.sin(i * 12.9898) * 43758.5453) % 1;
+      var jy = (Math.sin(i * 78.233) * 12543.231) % 1;
+      var x = 0.5 + Math.cos(a) * r * 1.06 + jx * 0.012;
+      var y = 0.48 + Math.sin(a) * r * 0.92 + jy * 0.012;
+      pts.push({
+        x: Math.min(0.94, Math.max(0.06, x)),
+        y: Math.min(0.9, Math.max(0.1, y))
+      });
+    }
+    return pts;
+  }
+
+  var positions = layout(TOTAL);
+
+  function starSVG(cls) {
+    return '<svg viewBox="0 0 100 100" aria-hidden="true" class="' + (cls || '') + '">' +
+      '<path d="M50 0C55 30 70 45 100 50 70 55 55 70 50 100 45 70 30 55 0 50 30 45 45 30 50 0Z"/></svg>';
+  }
+
+  /* ================= 渲染星星 ================= */
+  var starEls = {};
+
+  function isLit(n) { return !!progress.lit[n]; }
+
+  function coolingLeft() { return Math.max(0, (progress.cooldownUntil || 0) - Date.now()); }
+
+  function renderStars() {
+    sky.innerHTML = '';
+    starEls = {};
+
+    for (var n = 1; n <= TOTAL; n++) {
+      var p = positions[n - 1];
+      var hasText = !!MEMORIES[n];
+
+      if (!hasText) {
+        var empty = document.createElement('span');
+        empty.className = 'star--empty';
+        empty.setAttribute('aria-hidden', 'true');
+        empty.style.left = (p.x * 100) + '%';
+        empty.style.top = (p.y * 100) + '%';
+        sky.appendChild(empty);
+        continue;
+      }
+
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'star ' + (isLit(n) ? 'star--lit' : 'star--dim');
+      if (isLit(n) && n % 3 === 0) b.classList.add('is-gold');
+      b.style.left = (p.x * 100) + '%';
+      b.style.top = (p.y * 100) + '%';
+      b.dataset.n = n;
+      b.innerHTML = starSVG() + '<span class="star__no">' + n + '</span>';
+      b.setAttribute('aria-label', '第 ' + n + ' 颗星，' + (isLit(n) ? '已点亮，点击回看' : '未点亮'));
+
+      b.addEventListener('click', onStarClick);
+      sky.appendChild(b);
+      starEls[n] = b;
+    }
+
+    applyCooldown();
+  }
+
+  function applyCooldown() {
+    var left = coolingLeft();
+    var cooling = left > 0;
+
+    for (var n in starEls) {
+      var el = starEls[n];
+      if (isLit(n)) { el.classList.remove('star--locked'); continue; }
+      if (cooling) {
+        el.classList.add('star--locked');
+        el.classList.remove('star--dim');
+        el.setAttribute('aria-label', '第 ' + n + ' 颗星，冷却中');
+      } else {
+        el.classList.remove('star--locked');
+        if (!isLit(n)) el.classList.add('star--dim');
+        el.setAttribute('aria-label', '第 ' + n + ' 颗星，未点亮');
+      }
+    }
+
+    var cool = $('cool');
+    if (cooling) {
+      cool.hidden = false;
+      $('coolTime').textContent = fmtLeft(left);
+    } else {
+      cool.hidden = true;
+    }
+  }
+
+  /* ================= 许愿瓶 ================= */
+  function renderBottle() {
+    var lits = Object.keys(progress.lit);
+    var count = lits.length;
+    $('count').textContent = count;
+    $('bottleLabel').textContent = CONFIG.bottleLabel || '许愿瓶';
+
+    var box = $('bottleStars');
+    box.innerHTML = '';
+    var shown = Math.min(count, 26);
+    for (var i = 0; i < shown; i++) {
+      var s = document.createElement('i');
+      var px = 8 + ((i * 37) % 62);
+      var py = 62 - Math.floor(i / 7) * 16 - ((i * 13) % 10);
+      s.style.left = px + '%';
+      s.style.top = Math.max(4, py) + '%';
+      s.style.animationDelay = ((i % 6) * 0.4) + 's';
+      box.appendChild(s);
+    }
+  }
+
+  /* ================= 音效 ================= */
+  var actx = null;
+  function chime() {
+    if (!soundOn) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      var t = actx.currentTime;
+      [880, 1318.5].forEach(function (freq, i) {
+        var o = actx.createOscillator();
+        var g = actx.createGain();
+        o.type = 'sine';
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(i ? 0.035 : 0.06, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+        o.connect(g).connect(actx.destination);
+        o.start(t);
+        o.stop(t + 1.2);
+      });
+    } catch (e) {}
+  }
+
+  /* ================= 点击星星 ================= */
+  function onStarClick(e) {
+    var n = Number(e.currentTarget.dataset.n);
+
+    if (isLit(n)) { openCard(n, 'read'); return; }
+
+    if (coolingLeft() > 0) {
+      toast('再等 ' + fmtLeft(coolingLeft()) + '，就能点亮下一颗了');
+      return;
+    }
+    light(n, e.currentTarget);
+  }
+
+  function light(n, el) {
+    var r = el.getBoundingClientRect();
+    if (!RM) {
+      var bloom = document.createElement('div');
+      bloom.className = 'bloom';
+      bloom.style.left = (r.left + r.width / 2) + 'px';
+      bloom.style.top = (r.top + r.height / 2) + 'px';
+      document.body.appendChild(bloom);
+      setTimeout(function () { bloom.remove(); }, 900);
+    }
+    chime();
+    openCard(n, 'write');
+  }
+
+  /* ================= 卡片 ================= */
+  var modal = $('modal');
+  var modalBackdrop = $('modalBackdrop');
+  var cardText = $('cardText');
+  var cardForm = $('cardForm');
+  var cardSuccess = $('cardSuccess');
+  var cardRead = $('cardRead');
+  var responseEl = $('response');
+  var submitBtn = $('submit');
+  var typing = null;
+  var currentN = null;
+  var currentMode = 'write';
+
+  function openCard(n, mode) {
+    currentN = n;
+    currentMode = mode;
+
+    $('cardNo').textContent = '第 ' + n + ' 颗星';
+    cardText.innerHTML = '';
+    $('cardForm').hidden = mode !== 'write' || isLit(n);
+    cardSuccess.hidden = true;
+    cardRead.hidden = true;
+    responseEl.value = '';
+    $('respCount').textContent = '0 / 120';
+    submitBtn.disabled = true;
+
+    if (mode === 'read' || isLit(n)) {
+      var rec = progress.lit[n] || {};
+      $('readResponse').textContent = rec.response || '（还没有写下回应）';
+      $('readTime').textContent = rec.respondedAt ? ('回应于 ' + fmtTime(rec.respondedAt)) : '';
+      cardRead.hidden = false;
+    }
+
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+
+    typewrite(cardText, String(MEMORIES[n] || ''), function () {
+      if (mode === 'write' && !isLit(n)) responseEl.focus();
+    });
+  }
+
+  function typewrite(el, text, done) {
+    var i = 0, timer = null, finished = false;
+
+    el.textContent = '';
+    var tn = document.createTextNode('');
+    var caret = document.createElement('span');
+    caret.className = 'caret';
+    el.appendChild(tn);
+    el.appendChild(caret);
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      tn.nodeValue = text;
+      caret.remove();
+      typing = null;
+      done && done();
+    }
+
+    function step() {
+      if (i >= text.length) { finish(); return; }
+      tn.nodeValue = text.slice(0, ++i);
+      timer = setTimeout(step, 32);
+    }
+
+    typing = { skip: finish };
+    step();
+  }
+
+  cardText.addEventListener('click', function () {
+    if (typing && typing.skip) typing.skip();
+  });
+
+  function closeCard() {
+    modal.hidden = true;
+    document.body.style.overflow = '';
+    if (typing) { clearTimeout(typing.timer); typing = null; }
+    cardText.innerHTML = '';
+    currentN = null;
+  }
+
+  $('cardClose').addEventListener('click', closeCard);
+  modalBackdrop.addEventListener('click', closeCard);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (!$('galaxy').hidden && !$('gcard').hidden) { $('gcard').hidden = true; return; }
+      if (!$('galaxy').hidden) { closeGalaxy(); return; }
+      if (!modal.hidden) closeCard();
+    }
+  });
+
+  responseEl.addEventListener('input', function () {
+    var v = responseEl.value;
+    $('respCount').textContent = v.length + ' / 120';
+    submitBtn.disabled = v.trim().length === 0;
+  });
+
+  submitBtn.addEventListener('click', function () {
+    var text = responseEl.value.trim();
+    if (!text || currentN == null) return;
+
+    var n = currentN;
+    var now = Date.now();
+
+    progress.lit[n] = {
+      litAt: now,
+      respondedAt: now,
+      response: text
+    };
+    progress.cooldownUntil = now + COOLDOWN_MS;
+    saveProgress(progress);
+
+    // 成功态
+    cardForm.hidden = true;
+    $('successText').textContent = CONFIG.successText || '你已经和星星一块升成新的回忆碎片啦';
+    $('successTime').textContent = '回应时间 ' + fmtTime(now);
+    cardSuccess.hidden = false;
+    chime();
+
+    var el = starEls[n];
+    var fromRect = el ? el.getBoundingClientRect() : null;
+    renderStars();
+    renderBottle();
+    applyCooldown();
+
+    setTimeout(function () {
+      closeCard();
+      if (fromRect) flyToBottle(fromRect);
+      setTimeout(function () {
+        renderBottle();
+        applyCooldown();
+      }, 420);
+    }, 1500);
+  });
+
+  /* ================= 星星飞入许愿瓶 ================= */
+  function flyToBottle(r) {
+    if (RM) return;
+    var b = $('bottle').getBoundingClientRect();
+
+    var node = document.createElement('div');
+    node.className = 'fly';
+    node.innerHTML = starSVG();
+    document.body.appendChild(node);
+
+    var x0 = r.left + r.width / 2 - 13;
+    var y0 = r.top + r.height / 2 - 13;
+    var x1 = b.left + b.width / 2 - 13;
+    var y1 = b.top + b.height * 0.42 - 13;
+
+    var anim = node.animate([
+      { transform: 'translate(' + x0 + 'px,' + y0 + 'px) scale(1)', opacity: 1 },
+      { transform: 'translate(' + (x0 + (x1 - x0) * 0.55) + 'px,' + (y0 + (y1 - y0) * 0.45 - 70) + 'px) scale(.85)', opacity: .95, offset: .55 },
+      { transform: 'translate(' + x1 + 'px,' + y1 + 'px) scale(.35)', opacity: 0 }
+    ], { duration: 900, easing: 'cubic-bezier(.25,.8,.3,1)' });
+
+    anim.onfinish = function () { node.remove(); };
+  }
+
+  /* ================= 银河视图 ================= */
+  function openGalaxy() {
+    var lits = Object.keys(progress.lit).map(Number).sort(function (a, b) { return a - b; });
+    if (!lits.length) { toast('许愿瓶还是空的，先去点亮一颗星吧'); return; }
+
+    $('galaxy').hidden = false;
+    $('gcard').hidden = true;
+
+    $('galaxySub').textContent = '已点亮 ' + lits.length + ' 颗';
+    var stage = $('galaxyStars');
+    stage.innerHTML = '';
+
+    var box = $('galaxyStage').getBoundingClientRect();
+    var pts = [];
+    var W = box.width, H = box.height;
+
+    lits.forEach(function (n, i) {
+      var t = (i + 0.5) / lits.length;
+      var r = Math.sqrt(t) * 0.42;
+      var a = i * Math.PI * (3 - Math.sqrt(5));
+      var x = W * (0.5 + Math.cos(a) * r * 1.15);
+      var y = H * (0.5 + Math.sin(a) * r * 0.92);
+      pts.push({ x: x, y: y, n: n });
+
+      var g = document.createElement('button');
+      g.type = 'button';
+      g.className = 'gstar';
+      g.style.left = x + 'px';
+      g.style.top = y + 'px';
+      g.innerHTML = starSVG() + '<span class="gstar__no">' + n + '</span>';
+      g.setAttribute('aria-label', '第 ' + n + ' 颗星，点击查看');
+      g.addEventListener('click', function () { showGalaxyCard(n); });
+      stage.appendChild(g);
+    });
+
+    // 星座连线
+    var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    poly.setAttribute('points', pts.map(function (p) { return p.x + ',' + p.y; }).join(' '));
+    var svg = $('galaxyLines');
+    svg.innerHTML = '';
+    svg.appendChild(poly);
+
+    document.body.style.overflow = 'hidden';
+  }
+
+  function showGalaxyCard(n) {
+    var rec = progress.lit[n] || {};
+    $('gcardNo').textContent = '第 ' + n + ' 颗星';
+    $('gcardText').textContent = String(MEMORIES[n] || '');
+    $('gcardResp').textContent = rec.response || '（还没有写下回应）';
+    $('gcardTime').textContent = rec.respondedAt ? ('回应于 ' + fmtTime(rec.respondedAt)) : '';
+    $('gcard').hidden = false;
+  }
+
+  function closeGalaxy() {
+    $('galaxy').hidden = true;
+    $('gcard').hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  $('bottle').addEventListener('click', openGalaxy);
+  $('galaxyClose').addEventListener('click', closeGalaxy);
+  $('gcardClose').addEventListener('click', function () { $('gcard').hidden = true; });
+
+  /* ================= 提示 ================= */
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('is-on'); }, 2400);
+  }
+
+  /* ================= 首次引导 ================= */
+  function maybeGuide() {
+    var seen = false;
+    try { seen = localStorage.getItem(KEY_GUIDE) === '1'; } catch (e) {}
+    if (seen) { $('guide').remove(); return; }
+
+    $('guideText').textContent = CONFIG.guideText || '点点这些灰色小星星，会有惊喜哦';
+    var g = $('guide');
+    setTimeout(function () {
+      g.classList.add('is-out');
+      setTimeout(function () { g.remove(); }, 900);
+    }, 5200);
+    try { localStorage.setItem(KEY_GUIDE, '1'); } catch (e) {}
+  }
+
+  /* ================= 背景微尘 & 随机闪烁 ================= */
+  function dust() {
+    var box = $('dust');
+    var n = 110;
+    var html = '';
+    for (var i = 0; i < n; i++) {
+      var s = (Math.random() * 1.6 + 0.6).toFixed(1);
+      html += '<i style="left:' + (Math.random() * 100).toFixed(2) + '%;top:' +
+        (Math.random() * 100).toFixed(2) + '%;width:' + s + 'px;height:' + s +
+        'px;opacity:' + (Math.random() * 0.18 + 0.06).toFixed(2) + '"></i>';
+    }
+    box.innerHTML = html;
+  }
+
+  function twinkleLoop() {
+    if (RM) return;
+    setInterval(function () {
+      var keys = Object.keys(starEls);
+      if (!keys.length) return;
+      var n = keys[Math.floor(Math.random() * keys.length)];
+      var el = starEls[n];
+      if (!el || isLit(Number(n)) || el.classList.contains('star--locked')) return;
+      el.classList.add('is-twinkle');
+      setTimeout(function () { el.classList.remove('is-twinkle'); }, 1600);
+    }, 2300);
+  }
+
+  /* ================= 声音开关 ================= */
+  function renderSound() {
+    $('sound').textContent = soundOn ? '♪' : '∅';
+    $('sound').title = soundOn ? '关闭音效' : '开启音效';
+    $('sound').style.opacity = soundOn ? '1' : '.55';
+  }
+
+  $('sound').addEventListener('click', function () {
+    soundOn = !soundOn;
+    try { localStorage.setItem(KEY_SOUND, soundOn ? '1' : '0'); } catch (e) {}
+    renderSound();
+  });
+
+  /* ================= 管理面板 ================= */
+  function isAdmin() {
+    return /[?&]admin=1\b/.test(location.search);
+  }
+
+  function renderAdmin() {
+    if (!isAdmin()) return;
+    $('admin').hidden = false;
+    $('adminLit').textContent = Object.keys(progress.lit).length;
+    $('adminIds').textContent = Object.keys(MEMORIES).map(Number).sort(function (a, b) { return a - b; }).join('、');
+  }
+
+  $('adminReset').addEventListener('click', function () {
+    if (!confirm('确定清空本机进度？已点亮的星和回应都会删除。')) return;
+    try { localStorage.removeItem(KEY_PROGRESS); localStorage.removeItem(KEY_GUIDE); } catch (e) {}
+    location.reload();
+  });
+
+  $('adminExport').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(progress, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '回忆星进度-' + fmtTime(Date.now()).replace(/[: ]/g, '-') + '.json';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+  /* 用户输入回应时，避免误点关闭 */
+  var cardEl = document.querySelector('.card');
+  cardEl.addEventListener('click', function (e) { e.stopPropagation(); });
+
+  /* ================= 启动 ================= */
+  function tick() {
+    var left = coolingLeft();
+    if (left > 0) {
+      $('coolTime').textContent = fmtLeft(left);
+    } else if (!$('cool').hidden) {
+      applyCooldown();
+      renderStars();
+    }
+    setTimeout(tick, 1000);
+  }
+
+  function start() {
+    document.title = CONFIG.siteTitle || '100 颗回忆星';
+    dust();
+    renderStars();
+    renderBottle();
+    renderSound();
+    maybeGuide();
+    twinkleLoop();
+    renderAdmin();
+    tick();
+    setTimeout(function () { applyCooldown(); }, 50);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
